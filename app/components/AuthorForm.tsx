@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export type Author = {
   id: number;
@@ -36,21 +36,46 @@ export default function AuthorForm({ onAddAuthor, initialAuthor }: Props) {
     }
   }, [initialAuthor]);
 
+  function validateName(value: string) {
+    if (!value.trim()) return "El nombre es obligatorio";
+    if (value.trim().length < 3) return "Mínimo 3 caracteres";
+    return "";
+  }
+
+  function validateBirthDate(value: string) {
+    if (!value) return "La fecha es obligatoria";
+    return "";
+  }
+
+  function validateDescription(value: string) {
+    if (!value.trim()) return "La descripción es obligatoria";
+    if (value.trim().length < 10) return "Mínimo 10 caracteres";
+    return "";
+  }
+
+  function validateImage(value: string) {
+    if (!value.trim()) return "La imagen es obligatoria";
+    if (!value.startsWith("http")) return "Debe ser una URL válida";
+    return "";
+  }
+
   function validate() {
-    let valid = true;
-    if (!name.trim()) { setErrorName("El nombre es obligatorio"); valid = false; }
-    else setErrorName("");
-    if (!birthDate) { setErrorBirthDate("La fecha es obligatoria"); valid = false; }
-    else setErrorBirthDate("");
-    if (!description.trim()) { setErrorDescription("La descripción es obligatoria"); valid = false; }
-    else setErrorDescription("");
-    if (!image.trim()) { setErrorImage("La imagen es obligatoria"); valid = false; }
-    else setErrorImage("");
-    return valid;
+    const nameError = validateName(name);
+    const birthDateError = validateBirthDate(birthDate);
+    const descriptionError = validateDescription(description);
+    const imageError = validateImage(image);
+
+    setErrorName(nameError);
+    setErrorBirthDate(birthDateError);
+    setErrorDescription(descriptionError);
+    setErrorImage(imageError);
+
+    return !nameError && !birthDateError && !descriptionError && !imageError;
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
     if (!validate()) return;
 
     const newAuthor: Author = {
@@ -68,13 +93,24 @@ export default function AuthorForm({ onAddAuthor, initialAuthor }: Props) {
       setBirthDate("");
       setDescription("");
       setImage("");
+      setErrorName("");
+      setErrorBirthDate("");
+      setErrorDescription("");
+      setErrorImage("");
     }
 
     setSuccessMessage(
       initialAuthor ? "Autor actualizado correctamente" : "Autor creado correctamente"
     );
+
     setTimeout(() => setSuccessMessage(""), 3000);
   }
+
+  const isFormValid =
+    validateName(name) === "" &&
+    validateBirthDate(birthDate) === "" &&
+    validateDescription(description) === "" &&
+    validateImage(image) === "";
 
   return (
     <div className="form-wrapper">
@@ -91,13 +127,19 @@ export default function AuthorForm({ onAddAuthor, initialAuthor }: Props) {
             id="name"
             className={`form-control ${errorName ? "is-invalid" : ""}`}
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              setName(value);
+              setErrorName(validateName(value));
+            }}
+            onBlur={() => setErrorName(validateName(name))}
             aria-describedby={errorName ? "errorName" : undefined}
             aria-invalid={!!errorName}
             placeholder="Ej: Gabriel García Márquez"
           />
+          <small className="text-muted">Mínimo 3 caracteres</small>
           {errorName && (
-            <div id="errorName" className="invalid-feedback" role="alert">
+            <div id="errorName" className="invalid-feedback" role="alert" aria-label={errorName}>
               {errorName}
             </div>
           )}
@@ -110,12 +152,18 @@ export default function AuthorForm({ onAddAuthor, initialAuthor }: Props) {
             id="birthDate"
             className={`form-control ${errorBirthDate ? "is-invalid" : ""}`}
             value={birthDate}
-            onChange={(e) => setBirthDate(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              setBirthDate(value);
+              setErrorBirthDate(validateBirthDate(value));
+            }}
+            onBlur={() => setErrorBirthDate(validateBirthDate(birthDate))}
             aria-describedby={errorBirthDate ? "errorBirthDate" : undefined}
             aria-invalid={!!errorBirthDate}
           />
+          <small className="text-muted">Campo obligatorio</small>
           {errorBirthDate && (
-            <div id="errorBirthDate" className="invalid-feedback" role="alert">
+            <div id="errorBirthDate" className="invalid-feedback" role="alert" aria-label={errorBirthDate}>
               {errorBirthDate}
             </div>
           )}
@@ -127,14 +175,20 @@ export default function AuthorForm({ onAddAuthor, initialAuthor }: Props) {
             id="description"
             className={`form-control ${errorDescription ? "is-invalid" : ""}`}
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              setDescription(value);
+              setErrorDescription(validateDescription(value));
+            }}
+            onBlur={() => setErrorDescription(validateDescription(description))}
             aria-describedby={errorDescription ? "errorDescription" : undefined}
             aria-invalid={!!errorDescription}
             placeholder="Breve biografía del autor..."
             rows={4}
           />
+          <small className="text-muted">Mínimo 10 caracteres</small>
           {errorDescription && (
-            <div id="errorDescription" className="invalid-feedback" role="alert">
+            <div id="errorDescription" className="invalid-feedback" role="alert" aria-label={errorDescription}>
               {errorDescription}
             </div>
           )}
@@ -146,19 +200,29 @@ export default function AuthorForm({ onAddAuthor, initialAuthor }: Props) {
             id="image"
             className={`form-control ${errorImage ? "is-invalid" : ""}`}
             value={image}
-            onChange={(e) => setImage(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              setImage(value);
+              setErrorImage(validateImage(value));
+            }}
+            onBlur={() => setErrorImage(validateImage(image))}
             aria-describedby={errorImage ? "errorImage" : undefined}
             aria-invalid={!!errorImage}
             placeholder="https://ejemplo.com/foto.jpg"
           />
+          <small className="text-muted">Debe comenzar con http o https</small>
           {errorImage && (
-            <div id="errorImage" className="invalid-feedback" role="alert">
+            <div id="errorImage" className="invalid-feedback" role="alert" aria-label={errorImage}>
               {errorImage}
             </div>
           )}
         </div>
 
-        <button type="submit" className="btn btn-submit w-100">
+        <button
+          type="submit"
+          className="btn btn-submit w-100"
+          disabled={!isFormValid}
+        >
           {initialAuthor ? "Guardar Cambios" : "Crear Autor"}
         </button>
       </form>
